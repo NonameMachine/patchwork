@@ -1,0 +1,39 @@
+---
+default_language_version:
+  # force all unspecified python hooks to run python3
+  python: python3
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+        exclude: (.*\.mbox)|(.*\.css)|(.*\.json)|(.*\.js)|(.*\.svg)|(.*/mails/.*-subject\.txt)|(tools/docker/db)
+      - id: trailing-whitespace
+        exclude: (.*\.mbox)|(.*\.svg)
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: remove-tabs
+        exclude: (.*\.mbox)|(.*\.svg)|(.*\.sql)|(.*\.conf)
+      - id: remove-crlf
+        exclude: (.*\.mbox)|(.*\.svg)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.1.13
+    hooks:
+      # Run the linter.
+      - id: ruff
+      # Run the formatter.
+      - id: ruff-format
+  - repo: https://github.com/openstack/bashate
+    rev: 2.1.1
+    hooks:
+      - id: bashate
+  - repo: https://github.com/daveshanley/vacuum
+    rev: v0.7.2
+    hooks:
+      - id: vacuum
+        files: ^docs/api/schemas/(latest|v\d\.\d)/patchwork.yaml
