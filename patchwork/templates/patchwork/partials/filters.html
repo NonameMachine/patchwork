@@ -1,0 +1,125 @@
+{% load static %}
+
+<script type="text/javascript">
+var filterform_displayed = false;
+function filter_click()
+{
+    var form = document.getElementById('filterform');
+    if (!form) {
+        return;
+    }
+
+    if (filterform_displayed) {
+        form.style['display'] = 'none';
+        filterform_displayed = false;
+    } else {
+        form.style['display'] = 'block';
+        filterform_displayed = true;
+    }
+}
+
+Selectize.define('enter_key_submit', function (options) {
+    var self = this;
+
+    this.onKeyDown = (function (e) {
+        var original = self.onKeyDown;
+
+        return function (e) {
+            var wasOpened = this.isOpen;
+            original.apply(this, arguments);
+
+            if (e.keyCode === 13 &&
+                (this.$control_input.val() != '' || !wasOpened))
+                self.trigger('submit');
+        };
+    })();
+});
+
+$(document).ready(function() {
+    $('#submitter_input').selectize({
+        plugins: ['enter_key_submit'],
+        maxItems: 1,
+        persist: false,
+        onInitialize: function() {
+            this.on('submit', function() {
+                if (!this.items.length)
+                    this.$input.val(this.lastValue);
+                this.$input.closest('form').submit();
+            }, this);
+        },
+{% if "submitter" in filters.applied_filters %}
+{% with submitter_filter=filters.applied_filters.submitter %}
+        options: [
+            {
+                value: "{{ submitter_filter.key }}",
+                text: "{{ submitter_filter.condition }}",
+            },
+        ],
+        items: ["{{ submitter_filter.key }}"],
+{% endwith %}
+{% endif %}
+        load: function(query, callback) {
+            if (query.length < 4)
+                return callback();
+
+            req = $.ajax({
+                url: "{% url 'api-submitters' %}",
+                data: {q: query, l: 10},
+                error: function() {
+                    callback();
+                },
+                success: function(res) {
+                    callback($.map(res, function (obj) {
+                        return {value: obj.pk, text: `${obj.name} <${obj.email}>`};
+                    }));
+                }
+            });
+        }
+    });
+});
+</script>
+
+<div class="filters">
+  <div id="filtersummary">
+    <a href="javascript:filter_click()">Show patches with</a>:
+{% if filters.applied_filters %}
+{% for filter in filters.applied_filters.values %}
+    {{ filter.name }} = <strong>{{ filter.condition }}</strong>
+{% if not filter.forced %}
+    <a class="filter-action" href="{{ filter.url_without_me }}">
+      &nbsp;&nbsp;<span class="glyphicon glyphicon-minus-sign"></span>
+    </a>
+{% endif %}
+{% if not forloop.last %}
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+{% endif %}
+{% endfor %}
+{% else %}
+    none&nbsp;&nbsp;<a class="filter-action" href="javascript:filter_click()"><span class="glyphicon glyphicon-plus-sign"></span></a>
+{% endif %}
+{% with patch_count=page.paginator.count %}
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{{ patch_count }}
+    patch{{ patch_count | pluralize:"es" }}
+{% endwith %}
+  </div>
+
+  <div id="filterform" style="padding-top: 1em; display: none">
+    <form class="form-horizontal" method="get">
+{% for filter in filters.available_filters %}
+{% if not filter.forced %}
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ filter.name }}</label>
+        <div class="col-sm-5">
+          {{ filter.form }}
+        </div>
+      </div>
+{% endif %}
+{% endfor %}
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-5">
+          <button type="submit" class="btn btn-default">Apply</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% load person %}
+
+{% block title %}{{ user }}'s todo list{% endblock %}
+
+{% block body %}
+<h1>TODO</h1>
+
+<p>
+  A Patchwork todo-list contains patches that are assigned to you, are in an
+  "action required" state ({{ action_required_states|join:", " }}), and are
+  not archived.
+</p>
+
+{% include "patchwork/partials/patch-list.html" %}
+{% endblock %}

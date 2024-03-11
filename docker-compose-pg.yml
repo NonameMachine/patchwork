@@ -1,0 +1,32 @@
+version: "3"
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - ./tools/docker/db/postdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=patchwork
+      - POSTGRES_USER=patchwork
+      - POSTGRES_PASSWORD=password
+  web:
+    build:
+      context: .
+      dockerfile: ./tools/docker/Dockerfile
+      args:
+        - UID
+        - GID
+    depends_on:
+      - db
+    volumes:
+      - .:/home/patchwork/patchwork/
+    ports:
+      - "8000:8000"
+    environment:
+      - UID
+      - GID
+      - DATABASE_TYPE=postgres
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=patchwork
+      - DATABASE_USER=patchwork
+      - DATABASE_PASSWORD=password

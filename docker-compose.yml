@@ -1,0 +1,37 @@
+version: "3"
+services:
+  db:
+    image: mysql:latest
+    volumes:
+      - ./tools/docker/db/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=patchwork
+      - MYSQL_USER=patchwork
+      - MYSQL_PASSWORD=password
+    cap_add:
+      # avoid "mbind: Operation not permitted" error message spamming
+      # https://stackoverflow.com/a/55706057
+      - SYS_NICE  # CAP_SYS_NICE
+  web:
+    build:
+      context: .
+      dockerfile: ./tools/docker/Dockerfile
+      args:
+        - UID
+        - GID
+    depends_on:
+      - db
+    volumes:
+      - .:/home/patchwork/patchwork/
+    ports:
+      - "8000:8000"
+    environment:
+      - UID
+      - GID
+      # skip DATABASE_TYPE explicitly as mysql should be the default type.
+      - DATABASE_HOST=db
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=patchwork
+      - DATABASE_USER=patchwork
+      - DATABASE_PASSWORD=password
